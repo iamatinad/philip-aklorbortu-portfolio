@@ -78,7 +78,10 @@ const BackToTopButton: React.FC<{ isVisible: boolean, scrollToTop: () => void }>
 const App: React.FC = () => {
     const [activeSection, setActiveSection] = useState('about');
     const [showBackToTop, setShowBackToTop] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
+
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     const handleScroll = () => {
         if (window.pageYOffset > 300) {
@@ -88,13 +91,24 @@ const App: React.FC = () => {
         }
     };
 
-    const scrollToTop = (e?: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    const scrollToTop = (e?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
         if(e) e.preventDefault();
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
         });
     };
+
+    useEffect(() => {
+        if (isMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [isMenuOpen]);
 
     useEffect(() => {
         window.addEventListener('scroll', handleScroll);
@@ -117,6 +131,40 @@ const App: React.FC = () => {
 
     return (
         <>
+            <button
+                className="lg:hidden fixed top-6 right-6 z-50 p-2 rounded-full bg-slate-800/50 text-slate-200 hover:bg-slate-700/70"
+                onClick={toggleMenu}
+                aria-label="Toggle navigation menu"
+                aria-expanded={isMenuOpen}
+            >
+                {isMenuOpen ? <ICONS.close className="h-6 w-6" /> : <ICONS.menu className="h-6 w-6" />}
+            </button>
+            
+            {isMenuOpen && (
+                <div 
+                    className="lg:hidden fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center"
+                    onClick={toggleMenu}
+                    aria-modal="true"
+                    role="dialog"
+                >
+                    <nav aria-label="In-page jump links" onClick={e => e.stopPropagation()}>
+                        <ul className="text-center space-y-6">
+                            {sections.map(section => (
+                                <li key={section.id}>
+                                    <a 
+                                        className={`text-2xl font-bold transition-colors ${activeSection === section.id ? 'text-sky-400' : 'text-slate-300 hover:text-sky-400'}`}
+                                        href={`#${section.id}`}
+                                        onClick={toggleMenu}
+                                    >
+                                        {section.name}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </div>
+            )}
+
             <div className="mx-auto min-h-screen max-w-screen-xl px-6 py-12 font-sans md:px-12 md:py-20 lg:px-24 lg:py-0">
                 <div className="lg:flex lg:justify-between lg:gap-4">
                     <header className="lg:sticky lg:top-0 lg:flex lg:max-h-screen lg:w-1/2 lg:flex-col lg:justify-between lg:py-24">
